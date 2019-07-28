@@ -4,6 +4,10 @@ public class PathUtil {
 
     private static String seperator = System.getProperty("file.separator");
 
+    /**
+     * 获取绝对路径
+     * @return
+     */
     public static String getImgBasePath() {
 
         String os = System.getProperty("os.name");
@@ -16,6 +20,11 @@ public class PathUtil {
         return basePath.replace("/", seperator);
     }
 
+    /**
+     * 获取相对路径
+     * @param shopId
+     * @return
+     */
     public static String getShopImagePath(long shopId) {
 
         String imagePath = "upload/item/shop/" + shopId + "/";

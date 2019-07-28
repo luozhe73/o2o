@@ -16,6 +16,12 @@ public class ImageUtil {
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
     private static final Random RANDOM = new Random();
 
+    /**
+     * 图片加水印
+     * @param thumbnail：上传的图片文件
+     * @param targetAddr:相对路径
+     * @return
+     */
     public static String generateThumbnail(File thumbnail, String targetAddr) {
 
         String realFileName = getRandomFileName();
@@ -32,7 +38,7 @@ public class ImageUtil {
                     .outputQuality(0.8f)
                     .toFile(dest);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("创建缩略图失败：" + e.toString());
         }
 
         return relativeAddr;
@@ -67,7 +73,7 @@ public class ImageUtil {
      *
      * @return
      */
-    private static String getRandomFileName() {
+    public static String getRandomFileName() {
 
         //获取随机五位数
         int rannum = RANDOM.nextInt(89999) + 10000;
