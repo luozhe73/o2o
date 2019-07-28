@@ -1,6 +1,6 @@
 package com.cvicse.o2o.service.impl;
 
-import com.cvicse.o2o.dao.AreaDAO;
+import com.cvicse.o2o.dao.AreaDao;
 import com.cvicse.o2o.entity.Area;
 import com.cvicse.o2o.service.AreaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +12,7 @@ import java.util.List;
 public class AreaServiceImpl implements AreaService {
 
     @Autowired
-    private AreaDAO areaDAO;
+    private AreaDao areaDAO;
 
     @Override
     public List<Area> getAreaList() {

@@ -10,7 +10,7 @@ import java.util.List;
 public class AreaDaoTest extends BaseTest {
 
     @Autowired
-    private AreaDAO areaDAO;
+    private AreaDao areaDAO;
 
     @Test
     public void testQueryArea(){
