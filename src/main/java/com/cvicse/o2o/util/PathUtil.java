@@ -7,14 +7,18 @@ public class PathUtil {
     public static String getImgBasePath() {
 
         String os = System.getProperty("os.name");
-        String basePath = "";
+        String basePath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
         if (os.toLowerCase().startsWith("win")) {
-            basePath = "C:/images/";
+            basePath += "/images/";
         } else {
-            basePath = "";
+            basePath = "/user/";
         }
+        return basePath.replace("/", seperator);
+    }
 
-        basePath = basePath.replace("/", seperator);
-        return basePath;
+    public static String getShopImagePath(long shopId) {
+
+        String imagePath = "upload/item/shop/" + shopId + "/";
+        return imagePath.replace("/", seperator);
     }
 }
