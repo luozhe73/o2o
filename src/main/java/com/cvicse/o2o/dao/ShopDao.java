@@ -1,7 +1,6 @@
 package com.cvicse.o2o.dao;
 
 import com.cvicse.o2o.entity.Shop;
-import org.apache.ibatis.annotations.Update;
 
 public interface ShopDao {
 

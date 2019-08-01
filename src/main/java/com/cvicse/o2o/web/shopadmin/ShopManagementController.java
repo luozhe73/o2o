@@ -1,10 +1,14 @@
 package com.cvicse.o2o.web.shopadmin;
 
 import com.cvicse.o2o.dto.ShopExecution;
+import com.cvicse.o2o.entity.Area;
 import com.cvicse.o2o.entity.PersonInfo;
 import com.cvicse.o2o.entity.Shop;
+import com.cvicse.o2o.entity.ShopCategory;
 import com.cvicse.o2o.enums.ShopStateEnum;
+import com.cvicse.o2o.service.AreaService;
 import com.cvicse.o2o.service.ShopService;
+import com.cvicse.o2o.service.ShopCategoryService;
 import com.cvicse.o2o.util.HttpServletRequestUtil;
 import com.cvicse.o2o.util.ImageUtil;
 import com.cvicse.o2o.util.PathUtil;
@@ -20,7 +24,9 @@ import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -29,6 +35,32 @@ public class ShopManagementController {
 
     @Autowired
     private ShopService shopService;
+
+    @Autowired
+    private ShopCategoryService shopCategoryService;
+
+    @Autowired
+    private AreaService areaService;
+
+    @RequestMapping(value = "/getshopinitinfo",method = RequestMethod.GET)
+    @ResponseBody
+    private Map<String,Object> getShopInitInfo(){
+        Map<String, Object> modelMap = new HashMap<>();
+        List<ShopCategory> shopCategoryList=new ArrayList<>();
+        List<Area> areaList=new ArrayList<>();
+        try{
+            shopCategoryList=shopCategoryService.getShopCategoryList(new ShopCategory());
+            areaList = areaService.getAreaList();
+            modelMap.put("shopCategoryList",shopCategoryList);
+            modelMap.put("areaList",areaList);
+            modelMap.put("success",true);
+        }catch (Exception e){
+            modelMap.put("success",false);
+            modelMap.put("errMsg",e.getMessage());
+            return modelMap;
+        }
+        return modelMap;
+    }
 
     @RequestMapping(value = "/registershop",method = RequestMethod.POST)
     @ResponseBody
@@ -62,6 +94,7 @@ public class ShopManagementController {
         //2.注册店铺
         if (shop!=null&&shopImg!=null){
             PersonInfo owner=new PersonInfo();
+            //Session TODO
             owner.setUserId(1L);
             shop.setOwner(owner);
             File shopImgFile=new File(PathUtil.getImgBasePath()+ ImageUtil.getRandomFileName());
