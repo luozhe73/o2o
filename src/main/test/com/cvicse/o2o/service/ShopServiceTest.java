@@ -11,6 +11,9 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.Date;
 
 public class ShopServiceTest extends BaseTest {
@@ -19,7 +22,7 @@ public class ShopServiceTest extends BaseTest {
     private ShopService shopService;
 
     @Test
-    public void testAddShop(){
+    public void testAddShop() throws FileNotFoundException {
         Shop shop = new Shop();
         PersonInfo owner = new PersonInfo();
         Area area = new Area();
@@ -43,8 +46,10 @@ public class ShopServiceTest extends BaseTest {
 
         File file = new File("C:\\Users\\luozhe73\\Desktop\\xiaohuangren.jpg");
 
-        ShopExecution shopExecution=shopService.addShop(shop,file);
+        InputStream is=new FileInputStream(file);
 
-        System.out.println(shopExecution);
+        ShopExecution shopExecution=shopService.addShop(shop,is,file.getName());
+
+       System.out.println(shopExecution);
     }
 }

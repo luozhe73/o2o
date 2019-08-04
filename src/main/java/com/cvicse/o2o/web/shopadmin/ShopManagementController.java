@@ -6,9 +6,11 @@ import com.cvicse.o2o.entity.PersonInfo;
 import com.cvicse.o2o.entity.Shop;
 import com.cvicse.o2o.entity.ShopCategory;
 import com.cvicse.o2o.enums.ShopStateEnum;
+import com.cvicse.o2o.exceptions.ShopOperationException;
 import com.cvicse.o2o.service.AreaService;
 import com.cvicse.o2o.service.ShopService;
 import com.cvicse.o2o.service.ShopCategoryService;
+import com.cvicse.o2o.util.CodeUtil;
 import com.cvicse.o2o.util.HttpServletRequestUtil;
 import com.cvicse.o2o.util.ImageUtil;
 import com.cvicse.o2o.util.PathUtil;
@@ -42,105 +44,110 @@ public class ShopManagementController {
     @Autowired
     private AreaService areaService;
 
-    @RequestMapping(value = "/getshopinitinfo",method = RequestMethod.GET)
+    @RequestMapping(value = "/getshopinitinfo", method = RequestMethod.GET)
     @ResponseBody
-    private Map<String,Object> getShopInitInfo(){
+    private Map<String, Object> getShopInitInfo() {
         Map<String, Object> modelMap = new HashMap<>();
-        List<ShopCategory> shopCategoryList=new ArrayList<>();
-        List<Area> areaList=new ArrayList<>();
-        try{
-            shopCategoryList=shopCategoryService.getShopCategoryList(new ShopCategory());
+        List<ShopCategory> shopCategoryList = new ArrayList<>();
+        List<Area> areaList = new ArrayList<>();
+        try {
+            shopCategoryList = shopCategoryService.getShopCategoryList(new ShopCategory());
             areaList = areaService.getAreaList();
-            modelMap.put("shopCategoryList",shopCategoryList);
-            modelMap.put("areaList",areaList);
-            modelMap.put("success",true);
-        }catch (Exception e){
-            modelMap.put("success",false);
-            modelMap.put("errMsg",e.getMessage());
+            modelMap.put("shopCategoryList", shopCategoryList);
+            modelMap.put("areaList", areaList);
+            modelMap.put("success", true);
+        } catch (Exception e) {
+            modelMap.put("success", false);
+            modelMap.put("errMsg", e.getMessage());
             return modelMap;
         }
         return modelMap;
     }
 
-    @RequestMapping(value = "/registershop",method = RequestMethod.POST)
+    @RequestMapping(value = "/registershop", method = RequestMethod.POST)
     @ResponseBody
-    private Map<String,Object> registerShop(HttpServletRequest request){
+    private Map<String, Object> registerShop(HttpServletRequest request) {
 
         Map<String, Object> modelMap = new HashMap<>();
+        if (!CodeUtil.checkVerifyCode(request)){
+            modelMap.put("success", false);
+            modelMap.put("errMsg", "输入了错误的验证码");
+            return modelMap;
+        }
         //1.接受并转换相应信息，店铺信息和图片信息
-        String shopStr = HttpServletRequestUtil.getString(request,"shopStr");
+        String shopStr = HttpServletRequestUtil.getString(request, "shopStr");
         ObjectMapper objectMapper = new ObjectMapper();
-        Shop shop=null;
+        Shop shop;
+
         try {
-            shop=objectMapper.readValue(shopStr,Shop.class);
-        }catch (Exception e){
-            modelMap.put("success",false);
-            modelMap.put("errMsg",e.getMessage());
+            shop = objectMapper.readValue(shopStr, Shop.class);
+        } catch (Exception e) {
+            modelMap.put("success", false);
+            modelMap.put("errMsg", e.getMessage());
             return modelMap;
 
         }
-        CommonsMultipartFile shopImg=null;
-        CommonsMultipartResolver commonsMultipartResolver=new CommonsMultipartResolver(
+        CommonsMultipartFile shopImg;
+        CommonsMultipartResolver commonsMultipartResolver = new CommonsMultipartResolver(
                 request.getSession().getServletContext()
         );
-        if(commonsMultipartResolver.isMultipart(request)){
-            MultipartHttpServletRequest multipartHttpServletRequest= (MultipartHttpServletRequest) request;
-            shopImg= (CommonsMultipartFile) multipartHttpServletRequest.getFile("shopImg");
-        }else{
-            modelMap.put("success",false);
-            modelMap.put("errMsg","上传图片不能为空");
+        if (commonsMultipartResolver.isMultipart(request)) {
+            MultipartHttpServletRequest multipartHttpServletRequest = (MultipartHttpServletRequest) request;
+            shopImg = (CommonsMultipartFile) multipartHttpServletRequest.getFile("shopImg");
+        } else {
+            modelMap.put("success", false);
+            modelMap.put("errMsg", "上传图片不能为空");
             return modelMap;
         }
         //2.注册店铺
-        if (shop!=null&&shopImg!=null){
-            PersonInfo owner=new PersonInfo();
+        if (shop != null && shopImg != null) {
+            PersonInfo owner = new PersonInfo();
             //Session TODO
-            owner.setUserId(1L);
+            owner.setUserId(9L);
             shop.setOwner(owner);
-            File shopImgFile=new File(PathUtil.getImgBasePath()+ ImageUtil.getRandomFileName());
-            try{
-                shopImgFile.createNewFile();
-            }catch (IOException e){
-                modelMap.put("success",false);
-                modelMap.put("errMsg","请输入店铺信息");
-                return modelMap;
-            }
+            ShopExecution se = null;
 
             try {
-                inputStreamToFile(shopImg.getInputStream(),shopImgFile);
-            } catch (IOException e) {
-                modelMap.put("success",false);
-                modelMap.put("errMsg","请输入店铺信息");
-                return modelMap;
+                se = shopService.addShop(shop, shopImg.getInputStream(), shopImg.getOriginalFilename());
+
+                if (se.getState() == ShopStateEnum.CHECK.getState()) {
+                    modelMap.put("success", true);
+                } else {
+                    modelMap.put("success", false);
+                    modelMap.put("errMsg", se.getStateInfo());
+                }
+
+            } catch (ShopOperationException | IOException e) {
+                modelMap.put("success", false);
+                if (se != null) {
+                    modelMap.put("errMsg", se.getStateInfo());
+                } else {
+                    modelMap.put("errMsg", e.getMessage());
+                }
+
             }
-            ShopExecution se = shopService.addShop(shop,shopImgFile);
-            if (se.getState()== ShopStateEnum.CHECK.getState()) {
-                modelMap.put("success", true);
-            }
-            else{
-                modelMap.put("success",false);
-                modelMap.put("errMsg",se.getStateInfo());
-            }
+
             return modelMap;
-        }else{
-            modelMap.put("success",false);
-            modelMap.put("errMsg","请输入店铺信息");
+        } else {
+            modelMap.put("success", false);
+            modelMap.put("errMsg", "请输入店铺信息");
             return modelMap;
         }
     }
 
-    private static void inputStreamToFile(InputStream ins, File file){
+
+    private static void inputStreamToFile(InputStream ins, File file) {
 
 
-        try(FileOutputStream os = new FileOutputStream(file);ins){
+        try (FileOutputStream os = new FileOutputStream(file); ins) {
             int bytesRead = 0;
             byte[] buffer = new byte[1024];
 
-            while ((bytesRead=ins.read(buffer))!=-1){
-                os.write(buffer,0,bytesRead);
+            while ((bytesRead = ins.read(buffer)) != -1) {
+                os.write(buffer, 0, bytesRead);
             }
-        }catch (Exception e){
-            throw new RuntimeException("调用inputStreamToFile产生异常:"+e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("调用inputStreamToFile产生异常:" + e.getMessage());
         }
     }
 }

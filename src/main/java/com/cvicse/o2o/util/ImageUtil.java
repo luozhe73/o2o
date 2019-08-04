@@ -6,6 +6,7 @@ import net.coobird.thumbnailator.geometry.Positions;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
@@ -18,21 +19,22 @@ public class ImageUtil {
 
     /**
      * 图片加水印
-     * @param thumbnail：上传的图片文件
+     * @param thumbnailInputStream：上传的图片文件
      * @param targetAddr:相对路径
+     * @param fileName
      * @return
      */
-    public static String generateThumbnail(File thumbnail, String targetAddr) {
+    public static String generateThumbnail(InputStream thumbnailInputStream,String fileName, String targetAddr) {
 
         String realFileName = getRandomFileName();
-        String extension = getFileExtension(thumbnail);
+        String extension = getFileExtension(fileName);
         makeDirPath(targetAddr);
         String relativeAddr = targetAddr + realFileName + extension;
 
         File dest = new File(PathUtil.getImgBasePath() + relativeAddr);
 
         try {
-            Thumbnails.of(thumbnail)
+            Thumbnails.of(thumbnailInputStream)
                     .size(200, 200)
                     .watermark(Positions.BOTTOM_RIGHT, ImageIO.read(new File(basePath + "/watermark.jpg")), 0.25f)
                     .outputQuality(0.8f)
@@ -60,12 +62,11 @@ public class ImageUtil {
     /**
      * 获取扩展名
      *
-     * @param thumbnail
+     * @param fileName
      * @return
      */
-    private static String getFileExtension(File thumbnail) {
-        String originalFileName = thumbnail.getName();
-        return originalFileName.substring(originalFileName.lastIndexOf("."));
+    private static String getFileExtension(String fileName) {
+        return fileName.substring(fileName.lastIndexOf("."));
     }
 
     /**
